@@ -1,7 +1,10 @@
 <?php 
 class BankAccount{
-    private float $balance = 0;
-    private  bool $blocked = false;
+    protected float $balance = 0;
+    protected  bool $blocked = false;
+
+    protected float $maxMinus = -200;
+    protected float $provision = 0;
   
     public function getBalance(): float{
         return $this->balance;
@@ -18,26 +21,28 @@ class BankAccount{
     public function setBlocked($blocked): void{
         $this->blocked ;
     }
+    
+  
 
     public function podigniNovac($amount) {
         if ($this->blocked) {
             echo "Račun je blokiran. Ne možete podići novac.";
         }  else {
-            $this->balance -= $amount;
-            echo "Podigli ste $amount. Trenutno stanje na računu je $this->balance.";
+            $this->balance -= $amount + (($amount/100)*$this->provision);
+            echo "Podigli ste $amount. Trenutno stanje na računu: $this->balance.";
         }
-        if($this->balance <= -200){
+        if($this->balance <= $this->maxMinus){
             $this->blocked = true;
-            echo "Vaš račun je sada blokiran jer je stanje manje od -200.";
+            echo "Vaš račun je blokiran jer je stanje manje od $this->maxMinus ";
         }
     }
 
     public function uplatiNovac($amount) {
-        $this->balance += $amount;
+        $this->balance += $amount - (($amount/100)*$this->provision);
         echo "Uplatili ste $amount. Trenutno stanje na računu je $this->balance.";
         if ($this->balance >= 0) {
             $this->blocked = false;
-            echo "Vaš račun je sada odblokiran jer je stanje na računu 0 ili veće.";
+            echo "";
         }
     }
     
@@ -72,17 +77,20 @@ class User{
 
 }
 
-$objekat = new BankAccount();
-$objekat->podigniNovac(2000);
-$objekat->podigniNovac(2000);
-
-$objekat->uplatiNovac(4000);
-$objekat->podigniNovac(2000);
  
 
+class SimpleBankAccount extends BankAccount{
 
+}
 
-
-
-  
+class SecuredBankAccount extends BankAccount {
+ protected float $maxMinus = -1000;
+ protected float $provision = 2.5; 
+}
+    
+$secure = new SecuredBankAccount();
+$secure->uplatiNovac(100);
+$secure->podigniNovac(50);
+$secure->podigniNovac(1000);
+$secure->podigniNovac(100);
 
