@@ -104,7 +104,7 @@ class PCStore implements Rentable {
   }
   }
 
-  public function rent($article) {
+  public function rent() {
     if (in_array($article, $this->articleList) && $article->numberAvailable >= 1) {
       $article->numberAvailable -= 1;
       $this->storeProfit += $article->getPrice()*0.25;
