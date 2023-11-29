@@ -1,96 +1,108 @@
 <?php 
-class BankAccount{
-    protected float $balance = 0;
-    protected  bool $blocked = false;
 
-    protected float $maxMinus = -200;
-    protected float $provision = 0;
-  
-    public function getBalance(): float{
-        return $this->balance;
-    }
+class BankAccount {
+  protected float $money;
+  protected bool $isBlocked = false;
 
-    public function setBalance($balance): void {
-        $this->balance ;
-    }
+  public function getMoney() { return $this->money; }
+  public function setMoney(float $money) { return $this->money = $money; }
 
-    public function getBlocked(): bool {
-        return $this->blocked;
-    }
+  public function isAccountBlocked() { return $this->isBlocked; }
+  public function setBlocked(bool $blocked) { $this->isBlocked = $blocked; }
 
-    public function setBlocked($blocked): void{
-        $this->blocked ;
+  public function deposit(float $money) {
+    $this->money += $money;
+    printf("\nDeposit success. Current balance: %f", $this->money);
+    if($this->isAccountBlocked() && $this->money >= 0) {
+      $this->setBlocked(false);
+      echo("\nAccount is now unblocked!");
     }
-    
-  
-
-    public function podigniNovac($amount) {
-        if ($this->blocked) {
-            echo "Račun je blokiran. Ne možete podići novac.";
-        }  else {
-            $this->balance -= $amount + (($amount/100)*$this->provision);
-            echo "Podigli ste $amount. Trenutno stanje na računu: $this->balance.";
-        }
-        if($this->balance <= $this->maxMinus){
-            $this->blocked = true;
-            echo "Vaš račun je blokiran jer je stanje manje od $this->maxMinus ";
-        }
+  }
+  public function withdraw(float $money) {
+    if($this->isAccountBlocked()) {
+      echo("\nBank acccount is blocked");
+    } else {
+      $this->money -= $money;
+      printf("\nWithdraw success. Current balance: %f", $this->money);
     }
-
-    public function uplatiNovac($amount) {
-        $this->balance += $amount - (($amount/100)*$this->provision);
-        echo "Uplatili ste $amount. Trenutno stanje na računu je $this->balance.";
-        if ($this->balance >= 0) {
-            $this->blocked = false;
-            echo "";
-        }
-    }
-    
+  }
 }
 
-class User{
-    public string $firstName;
-    public string $lastName;
-    public string $racun;
-
-    function __construct(string $firstName, string $lastName, string $racun)
-    {
-        $this->firstName=$firstName;
-        $this->lastName=$lastName;
-        $this->racun=$racun;
+class SimpleBankAccount extends BankAccount {
+  public function withdraw(float $money) {
+    parent::withdraw($money);
+    if($this->money <= -200) {
+      $this->setBlocked(true);
+      echo("\nAccount is blocked because balance is too low!");
     }
-    public function getFirstName(): string{
-        return $this->firstName;
-    }
-
-    public function setfirstName($ime): void{
-        $this->firstName ;
-    }
-
-    public function getLastName(): string{
-        return $this->lastName;
-    }
-
-    public function setPrezime($prezime): void {
-        $this->lastName;
-    }
-
-}
-
- 
-
-class SimpleBankAccount extends BankAccount{
-
+  }
 }
 
 class SecuredBankAccount extends BankAccount {
- protected float $maxMinus = -1000;
- protected float $provision = 2.5; 
-}
-    
-$secure = new SecuredBankAccount();
-$secure->uplatiNovac(100);
-$secure->podigniNovac(50);
-$secure->podigniNovac(1000);
-$secure->podigniNovac(100);
+  public function deposit(float $money) {
+    parent::deposit($money);
+    $this->money -= ($this->money / 100) * 2.5;
+    printf("\n Secured balance after fee: %f", $this->money);
+  }
 
+  public function withdraw(float $money) {
+    parent::withdraw($money);
+    if($this->isAccountBlocked()) return;
+    $this->money -= ($this->money / 100) * 2.5;
+    printf("\n Secured balance after fee: %f", $this->money);
+
+    if($this->money <= -1000) {
+      $this->setBlocked(true);
+      echo("\nAccount is blocked because balance is too low!");
+    }
+  }
+}
+
+class User {
+  private string $firstName;
+  private string $lastName;
+  private SecuredBankAccount $securedAccount;
+  private SimpleBankAccount $simpleAccount;
+
+  public function __construct(string $firstName, string $lastName) {
+    $this->firstName = $firstName;
+    $this->lastName = $lastName;
+    $this->securedAccount = new SecuredBankAccount();
+    $this->simpleAccount = new SimpleBankAccount();
+    $this->simpleAccount->setMoney(0);
+    $this->securedAccount->setMoney(0);
+  }
+
+  public function getName() {
+    return "{$this->firstName} {$this->lastName}";
+  }
+
+  public function simpleAccount() { return $this->simpleAccount; }
+  public function securedAccount() { return $this->securedAccount; }
+
+  public function getSecuredBalance() {
+    printf("\nCurrent secured balance: %f", $this->securedAccount()->getMoney());
+  }
+  public function getSimpleBalance() {
+    printf("\nCurrent simple balance: %f", $this->securedAccount()->getMoney());
+  }
+}
+
+$myUser = new User('Pera', 'Peric');
+var_dump($myUser->getName());
+$myUser->getSimpleBalance();
+$myUser->getSecuredBalance();
+
+$myUser->securedAccount()->deposit(100);
+$myUser->simpleAccount()->deposit(100);
+
+$myUser->securedAccount()->withdraw(100);
+$myUser->securedAccount()->withdraw(2000);
+$myUser->securedAccount()->withdraw(1);
+
+$myUser->securedAccount()->deposit(3000);
+
+
+$myUser->simpleAccount()->withdraw(200);
+
+?>
